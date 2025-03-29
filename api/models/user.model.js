@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 //创建schema
 let userSchema = new mongoose.Schema({
-    userName:{
+    username:{
         type:String,
         required:true,
         unique:true
