@@ -24,3 +24,14 @@ app.listen(port,()=>{
 app.use("/api/user",userRoute)
 //使用authRoute
 app.use("/api/auth",authRoute)
+
+//处理错误的中间件
+app.use((err,req,res,next)=>{
+   let statusCode = err.statusCode || 500
+   let message    = err.message || "Internal Server Error"
+   res.status(statusCode).json({
+      success:false,
+      statusCode,
+      message
+   })
+})
