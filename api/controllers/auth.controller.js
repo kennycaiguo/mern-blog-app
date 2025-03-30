@@ -12,7 +12,7 @@ export const signup = async (req,res,next) =>{
          next(errorHandler(400,"All Fields Are Required")) 
     }
     //对密码进行哈希处理
-    let hashedPassword = bcryptjs.hashSync(password,10) 
+    let hashedPassword = bcryptjs.hashSync(password,10)  
     
     //验证后保存用户信息
     let newUser = new User({
