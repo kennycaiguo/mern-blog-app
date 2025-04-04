@@ -1,8 +1,48 @@
-import { Button, Label, TextInput } from 'flowbite-react'
-import React from 'react'
-import { Link } from 'react-router-dom'
+import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react'
+import React, { useState } from 'react'
+import { Link ,useNavigate} from 'react-router-dom'
 
 export default function SignUp() {
+   let [formData,setFormData] = useState({})
+   let [errorMessage,setErrorMessage] = useState(null)
+   let [loading,setLoading] = useState(false)
+   let navigate = useNavigate()
+   let handleChange = (e)=>{
+      //  console.log(e.target.value);
+       setFormData({...formData,[e.target.id]:e.target.value.trim()})
+   }
+  //  console.log(formData);
+   let handleSubmit =async (e)=>{
+      e.preventDefault() //阻止默认行为
+      //表单数据验证,返回错误信息
+      if(!formData.username || !formData.email || !formData.password){
+         return setErrorMessage('Please Fill Out All Fields!')
+      }
+      try {
+        setLoading(true)
+        setErrorMessage(null) //清空之前的错误信息
+        let res =await fetch("/api/auth/signup",{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(formData)
+        })
+        //处理获取到的数据
+        let data = res.json()
+        // 处理其他错误
+        if(data.success === false){
+          return setErrorMessage(data.message)
+        }
+        setLoading(false)
+        //如果注册成功，就跳转到登录页面
+        if(res.ok){
+          navigate("/sign-in")
+        }
+      } catch (error) {
+        setErrorMessage(error.message)
+        setLoading(false) //捕获到错误后，也需要把loading设置为false
+      }
+   }
+
   return (
     <div className='min-h-screen mt-20'>
       <div className='flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5'>
@@ -19,21 +59,27 @@ export default function SignUp() {
         </div>
         {/* right */}
         <div className='flex-1'>
-          <form className='flex flex-col gap-4'>
+          <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
             <div>
               <Label value='Your username' />
-              <TextInput type='text' placeholder='Username' id='username' />
+              <TextInput type='text' placeholder='Username' id='username' onChange={handleChange}/>
             </div>
             <div>
               <Label value='Your email' />
-              <TextInput type='text' placeholder='name@company.com' id='email' />
+              <TextInput type='email' placeholder='name@company.com' id='email' onChange={handleChange}/>
             </div>
             <div>
               <Label value='Your password' />
-              <TextInput type='text' placeholder='Password' id='password' />
+              <TextInput type='password' placeholder='Password' id='password' onChange={handleChange}/>
             </div>
-            <Button gradientDuoTone="purpleToPink" type='submit'>
-              Sign Up
+            <Button gradientDuoTone="purpleToPink" type='submit' disabled={loading}>
+              {loading? (
+                <>
+                 <Spinner size='sm' />
+                 <span className='pl-3'>Loading...</span>
+                </>
+                 
+              ) : 'Sign Up'}
             </Button>
           </form>
            <div className='flex gap-2 text-sm mt-5'>
@@ -42,6 +88,13 @@ export default function SignUp() {
                 Sign In
               </Link>
            </div>
+           {
+             errorMessage && (
+              <Alert className='mt-5' color='failure'>
+                {errorMessage}
+              </Alert>
+             )
+           }
         </div>
 
       </div>
