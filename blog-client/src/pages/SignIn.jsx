@@ -1,11 +1,17 @@
 import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react'
 import React, { useState } from 'react'
 import { Link ,useNavigate} from 'react-router-dom'
+import { useDispatch,useSelector } from 'react-redux'
+import { signInStart,signInSuccess,signInFailure } from '../redux/user/userSlice'
+// import store from '../redux/store'
 
 export default function SignIn() {
    let [formData,setFormData] = useState({})
-   let [errorMessage,setErrorMessage] = useState(null)
-   let [loading,setLoading] = useState(false)
+  //  let [errorMessage,setErrorMessage] = useState(null)
+  //  let [loading,setLoading] = useState(false)
+  let {loading,error:errorMessage }= useSelector(state=>state.user)
+   //初始化一个dispatch对象，然后用它来调用我们的函数
+   let dispatch = useDispatch()
    let navigate = useNavigate()
    let handleChange = (e)=>{
       //  console.log(e.target.value);
@@ -16,30 +22,39 @@ export default function SignIn() {
       e.preventDefault() //阻止默认行为
       //表单数据验证,返回错误信息
       if(!formData.email || !formData.password){
-         return setErrorMessage('Please Fill Out All Fields!')
+        //  return setErrorMessage('Please Fill Out All Fields!')
+        return dispatch(signInFailure("Please Fill In All Fields!"))
       }
       try {
-        setLoading(true)
-        setErrorMessage(null) //清空之前的错误信息
+        // setLoading(true)
+        // setErrorMessage(null) //清空之前的错误信息
+        dispatch(signInStart()) //这个函数里面就是做了上面2步
         let res =await fetch("/api/auth/signin",{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify(formData)
         })
         //处理获取到的数据
-        let data = res.json()
+        let data = await res.json()
+        console.log("data:",data);
+        
         // 处理其他错误
         if(data.success === false){
-          return setErrorMessage(data.message)
+          // return setErrorMessage(data.message)
+          dispatch(signInFailure(data.message))
         }
-        setLoading(false)
+        // setLoading(false)
         //如果注册成功，就跳转到登录页面
         if(res.ok){
+          dispatch(signInSuccess(data))
+          // console.log(data);
+          
           navigate("/") //登录后跳转到首页
         }
       } catch (error) {
-        setErrorMessage(error.message)
-        setLoading(false) //捕获到错误后，也需要把loading设置为false
+        // setErrorMessage(error.message)
+        // setLoading(false) //捕获到错误后，也需要把loading设置为false
+        dispatch(signInFailure(error.message))
       }
    }
 
