@@ -62,3 +62,38 @@ export const signin = async (req,res,next) =>{
         next(error)
     }
 }
+
+//google验证函数,可以登录或者创建新用户
+export const google = async (req,res,next)=>{
+  //获取前端传递过来的选项
+  let {email,name,googlePhotoUrl} = req.body
+  try {
+    let user = await User.findOne({email})
+    //判断用户是否存在，如果存在就登录，不存在就注册
+    if(user){
+        let token = jwt.sign({id:user._id},process.env.JWT_SECRET)
+        let {password,...rest} = user._doc
+        //设置到cookie
+       res.status(200).cookie("access_token",token,{httpOnly:true}).json(rest) //使用没有密码的信息
+    } else {
+        let generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8)
+        let hashedPassword = bcryptjs.hashSync(generatedPassword,10)
+        //创建用户
+        let newUser = new User({
+            username:name.toLowerCase().split(' ').join('')+Math.random().toString(9).slice(-4),
+            email,
+            password:hashedPassword,
+            profilePicture:googlePhotoUrl
+        })
+        //保存用户信息
+        await newUser.save()
+        //创建token
+        let token = jwt.sign({id:newUser._id},process.env.JWT_SECRET)
+        let {password,...rest} = newUser._doc
+        //设置到cookie
+       res.status(200).cookie("access_token",token,{httpOnly:true}).json(rest) //使用没有密码的信息
+    }
+  } catch (error) {
+    next(error)
+  }
+}
